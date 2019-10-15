@@ -80,6 +80,8 @@ def readField(filename, varNameList):
 
     readVars = []
 
+    isTimeRequested = False
+
     for i in range(len(varNameList)):
         timeDict = {}
         varName = varNameList[i]
@@ -88,6 +90,7 @@ def readField(filename, varNameList):
         val = np.array(dataset.variables[varName])
 
         if varName == 'time':
+            isTimeRequested = True
             timeLongName = dataset.variables[varName].long_name
             timeUnits = dataset.variables[varName].units
             calendar = dataset.variables[varName].calendar
@@ -115,7 +118,11 @@ def readField(filename, varNameList):
 
     fieldsDF = pd.DataFrame(data=readVars)
 
-    return fieldsDF, timeDict
+    if isTimeRequested:
+        return fieldsDF, timeDict
+    
+    else:
+        return fieldsDF
 
 
 def writeNetcdf_withTime(writeFilename, Xlen, Ylen, Zlen, time, timeUnits, calendar, writeDF):

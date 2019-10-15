@@ -5,43 +5,13 @@ import pandas as pd
 
 from operators import getGrad
 from readWrite import *
+from gridModule import *
+from constants import OMEGA, g
 
-
-filename = 'flt_HIGH_PASS.pop.h.0009-01-05.nc'
-gridFileName = 'flt_HIGH_PASS.pop.h.0009-01-05.nc'
-fieldFileNameList = 'flt_HIGH_PASS.pop.h.0009-01-05.nc'
-
-dataset = Dataset(filename)
-
-OMEGA = np.array(dataset.variables['omega'])
-g = np.array(dataset.variables['grav'])
-rho = np.array(dataset.variables['rho_sw'])
-
-
-dimensions, U_Grid_Var, T_Grid_Var = readGridInfo(gridFileName)
-
-Zlen = dimensions[0]
-Ylen = dimensions[1]
-Xlen = dimensions[2]
-
-var = T_Grid_Var.loc[T_Grid_Var['name'] == 'DXT']['val']
-heading = var.keys()[0]
-DX = var[heading]
-
-var = T_Grid_Var.loc[T_Grid_Var['name'] == 'DYT']['val']
-heading = var.keys()[0]
-DY = var[heading]
-
-var = T_Grid_Var.loc[T_Grid_Var['name'] == 'TLAT']['val']
-heading = var.keys()[0]
-phi = var[heading]
-
-var = T_Grid_Var.loc[T_Grid_Var['name'] == 'KMT']['val']
-heading = var.keys()[0]
-KMT = var[heading]
+landMask = np.ma.getmask(np.ma.masked_where(KMT < 1, KMT))
+eqMask = np.ma.getmask(np.ma.masked_where(abs(ULAT) <= 3, ULAT))
 
 def writeWithGeosVel(readFilename):
-
     fieldsDF, timeDict = readField(readFilename, ['SSH','RHO','SALT','TAUX','TAUY','time'])
 
     dateTime = timeDict['val']
@@ -56,22 +26,17 @@ def writeWithGeosVel(readFilename):
     SSH = var[heading]
     SSH = SSH[0,:,:]
 
-    landMask = np.ma.getmask(np.ma.masked_where(KMT < 1, KMT))
-    eqMask = np.ma.getmask(np.ma.masked_where(abs(phi) <= 3, phi))
     nanMask = np.ma.getmask(np.ma.masked_where(abs(SSH) > 1e10, SSH))
 
     mask = landMask + eqMask + nanMask
 
     SSH = np.ma.array(SSH,mask = mask,fill_value=float('nan')).filled()
+    phi = np.ma.array(ULAT, mask=mask, fill_value=float('nan')).filled()
 
-    dSSH_dx, dSSH_dy = getGrad(SSH, DX, DY)
+    dSSH_dx, dSSH_dy = getGrad(SSH, DXU, DYU)
 
-    u_gos = -g/(2*OMEGA*np.sin(phi)) * dSSH_dy
-    v_gos = g/(2*OMEGA*np.sin(phi)) * dSSH_dx
-
-    plt.pcolormesh(u_gos)
-    plt.clim(-200,200)
-    plt.show()
+    u_gos = -g/(2*OMEGA*np.sin(np.radians(phi))) * dSSH_dy
+    v_gos = g/(2*OMEGA*np.sin(np.radians(phi))) * dSSH_dx
 
     xlen = np.shape(u_gos)[1]
     ylen = np.shape(u_gos)[0]
@@ -110,7 +75,7 @@ def writeWithGeosVel(readFilename):
                          Zlen, dateTime, timeUnits, timeCalendar, fieldsDF)
 
 
-writeWithGeosVel('flt_HIGH_PASS.pop.h.0009-01-05.nc')
+
 
 
 
