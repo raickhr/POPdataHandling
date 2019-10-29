@@ -6,3 +6,11 @@ __pycache__/
 # netCDF files
 *.nc
 
+#batch files
+*.batch
+
+#folders
+POP_output
+ENG_output
+PRD_output
+

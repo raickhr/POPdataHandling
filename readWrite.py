@@ -18,8 +18,12 @@ def readGridInfo(filename):
                       'DYU',
                       'HUS',
                       'HUW',
+                      'UAREA',
                       'ANGLE',
-                      'KMU']
+                      'KMU',
+                      'dz',
+                      'z_w_top',
+                      'z_w_bot']
 
     T_GridVarNames = ['TLAT',
                       'TLONG',
@@ -27,8 +31,11 @@ def readGridInfo(filename):
                       'DYT',
                       'HTE',
                       'HTN',
+                      'TAREA',
                       'ANGLET',
-                      'KMT']
+                      'KMT',
+                      'dzw',
+                      'z_t']
 
     UGridVar = []
     TGridVar = []
@@ -86,6 +93,7 @@ def readField(filename, varNameList):
         timeDict = {}
         varName = varNameList[i]
         varLongName = dataset.variables[varName].long_name
+
         varUnits = dataset.variables[varName].units
         val = np.array(dataset.variables[varName])
 
@@ -142,7 +150,9 @@ def writeNetcdf_withTime(writeFilename, Xlen, Ylen, Zlen, time, timeUnits, calen
     writeDataset.createDimension('time', None)
 
     timeVar = writeDataset.createVariable('time', np.float64, ('time'))
+    timeVar.long_name = 'time'
     timeVar.units = timeUnits
+    timeVar.calendar = calendar
 
     timeVar[0] = date2num(time,timeUnits,calendar=calendar)
 
@@ -188,26 +198,52 @@ def writeNetcdf_withTime(writeFilename, Xlen, Ylen, Zlen, time, timeUnits, calen
     writeDataset.close()
 
 
-def writeNetcdf2D(writeFilename, Xlen, Ylen, time, timeUnits, writeDictList):
+def writeNetcdf(writeFilename, Xlen, Ylen, Zlen, writeDF):
+
     writeDataset = Dataset(writeFilename, 'w', format='NETCDF4_CLASSIC')
 
     writeDataset.createDimension('nlon', Xlen)
     writeDataset.createDimension('nlat', Ylen)
-    writeDataset.createDimension('time', None)
+    writeDataset.createDimension('z_t', Zlen)
 
-    numOfFields = len(writeDictList)
+    numOfFields = len(writeDF)
 
     #writeVar = []
 
     for i in range(numOfFields):
-        name = writeDictList[i]['name']
-        long_name = writeDictList[i]['long_name']
-        units = writeDictList[i]['units']
-        array = writeDictList[i]['val']
+        var = writeDF.iloc[[i]]['name']
+        heading = var.keys()[0]
+        name = var[heading]
 
-        var = writeDataset.createVariable(name, float, ('nlat', 'nlon'))
-        var.long_name = long_name
-        var.units = units
-        var[:, :] = array
+        var = writeDF.iloc[[i]]['long_name']
+        heading = var.keys()[0]
+        long_name = var[heading]
+
+        var = writeDF.iloc[[i]]['units']
+        heading = var.keys()[0]
+        units = var[heading]
+
+        var = writeDF.iloc[[i]]['val']
+        heading = var.keys()[0]
+        array = var[heading]
+        shape = np.shape(array)
+
+        if len(shape) == 2:
+            var = writeDataset.createVariable(
+                name, float, ('nlat', 'nlon'))
+            var.long_name = long_name
+            var.units = units
+            var[:, :] = array
+
+        elif len(shape) == 3:
+            var = writeDataset.createVariable(
+                name, float, ('z_t', 'nlat', 'nlon'))
+            var.long_name = long_name
+            var.units = units
+            var[:, :, :] = array
+
+        else:
+            print('{0} array size mismatch!!  size is {1}'.format(name, shape))
+            sys.exit()
 
     writeDataset.close()

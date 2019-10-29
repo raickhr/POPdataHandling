@@ -7,29 +7,37 @@ import gc
 from readWrite import *
 from gridModule import *
 from constants import *
+from operators import getUAREA3dmid, getLandMaskT3d
+
+averagedFile = glob(AVG_outpath+'POP_time_averaged.nc')[0]
 
 landMaskT = np.ma.getmask(np.ma.masked_where(KMT < 1, KMT))
 landMaskT3d = []#np.ones((Zlen,Ylen,Xlen), dtype =bool)
 
-averagedFile = 'flt_HIGH_PASS.pop.h.0009-01-05.nc'
-
-for k in range(Zlen):
-    lmask = np.ma.getmask(np.ma.masked_where(KMT < k+1, KMT))
-    landMaskT3d.append(lmask)
-
-landMaskT3d = np.array(landMaskT3d)
+landMaskT3d = getLandMaskT3d()
 
 avg_SALT_k0 = np.empty((1,Ylen,Xlen),dtype=float)
 
-fieldsDF = readField(averagedFile, ['SALT'])
+fieldsDF = readField(averagedFile, ['SALT','RHO'])
+
 var = fieldsDF.loc[fieldsDF['name'] == 'SALT']['val']
 heading = var.keys()[0]
-SALT = var[heading] / 1000  ## changing to msu units from psu
+avg_SALT = var[heading] / 1000  ## changing to msu units from psu
+avg_SALT_k0[0, :, :] = avg_SALT[0, :, :]
 
-avg_SALT_k0[0,:,:] = SALT[0, 0, :, :]
+var = fieldsDF.loc[fieldsDF['name'] == 'RHO']['val']
+heading = var.keys()[0]
+avg_RHO = var[heading]
+avg_RHO = np.ma.array(avg_RHO, mask = landMaskT3d, fill_value=float('nan')).filled()
 
-def writeWithProdFields(readFilename):
-    global avg_SALT_k0
+area_avg_RHO = np.empty((1, Zlen, Ylen, Xlen), dtype=float)
+UAREA3D = getUAREA3dmid()
+for k in range(Zlen):
+    area_avg_RHO[0, k, :, :] = np.nansum(avg_RHO[k, :, :] * UAREA3D[k, :, :]) \
+        / np.nansum(UAREA3D[k, :, :])
+
+def writeWithProdFields(readFilename,writeFilePath):
+    global avg_SALT_k0, area_avg_RHO
     fieldsDF, timeDict = readField(
         readFilename, ['UVEL',
                        'VVEL',
@@ -72,18 +80,17 @@ def writeWithProdFields(readFilename):
     rho_k0 = np.empty((1, Ylen, Xlen), dtype=float)
     rho_k0[0,:,:] = RHO[0,0,:,:]
 
-
     var = fieldsDF.loc[fieldsDF['name'] == 'SHF']['val']
     heading = var.keys()[0]
-    SHF = var[heading]
+    SHF = var[heading] * 1e7/10000 ## changing from watts/m^2 to ergs/(sec cm^2)
 
     var = fieldsDF.loc[fieldsDF['name'] == 'PREC_F']['val']
     heading = var.keys()[0]
-    PREC_F = var[heading]
+    PREC_F = var[heading] * 1000/10000 ## changing from kg/m^2 to gram/cm^2
 
     var = fieldsDF.loc[fieldsDF['name'] == 'EVAP_F']['val']
     heading = var.keys()[0]
-    EVAP_F = var[heading]
+    EVAP_F = var[heading] * 1000/10000  # changing from kg/m^2 to gram/cm^2
 
     var = fieldsDF.loc[fieldsDF['name'] == 'TAUX']['val']
     heading = var.keys()[0]
@@ -97,6 +104,9 @@ def writeWithProdFields(readFilename):
     RHO_VVEL = RHO * VVEL
     RHO_WVEL = RHO * WVEL
 
+    RHO_star = RHO - area_avg_RHO
+    RHO_star_RHO_star = RHO_star * RHO_star
+
     UVEL_UVEL = UVEL*UVEL
     UVEL_VVEL = UVEL*VVEL
     UVEL_WVEL = UVEL*WVEL
@@ -104,8 +114,8 @@ def writeWithProdFields(readFilename):
     VVEL_VVEL = VVEL*VVEL
     VVEL_WVEL = VVEL*WVEL
 
-    Js = SHF*1e7/(cp_sw * rho)
-    Gs = avg_SALT_k0 * (EVAP_F - PREC_F)*10/rho_fw ## changing kg/m^2 to g/cm^2
+    Js = SHF/(cp_sw * rho)
+    Gs = avg_SALT_k0 * (EVAP_F - PREC_F)/rho_fw
 
     Js_RHO = Js * rho_k0
     Gs_RHO = Gs * rho_k0
@@ -148,11 +158,34 @@ def writeWithProdFields(readFilename):
     all_data_dict.append(var_dict)
 
     var_dict = {
+        'name': 'RHO_star',
+        'long_name': 'differece of RHO and areaAveraged RHO at the level',
+        'units': 'gram/cm^3',
+        'val': RHO_star,
+    }
+
+    del RHO_star
+    gc.collect()
+    all_data_dict.append(var_dict)
+
+    var_dict = {
+        'name': 'RHO_star_RHO_star',
+        'long_name': 'differece of RHO and areaAveraged RHO at the level',
+        'units': 'gram^2/cm^6',
+        'val': RHO_star_RHO_star,
+    }
+
+    del RHO_star_RHO_star
+    gc.collect()
+    all_data_dict.append(var_dict)
+
+    var_dict = {
         'name': 'UVEL_UVEL',
         'long_name': 'product of UVEL and UVEL',
         'units': 'cm^2/sec^2',
         'val': UVEL_UVEL,
     }
+
 
     del UVEL_UVEL
     gc.collect()
@@ -168,6 +201,7 @@ def writeWithProdFields(readFilename):
     del UVEL_VVEL
     gc.collect()
     all_data_dict.append(var_dict)
+
 
     var_dict = {
         'name': 'UVEL_WVEL',
@@ -247,8 +281,5 @@ def writeWithProdFields(readFilename):
 
     writeDF = pd.DataFrame(data=all_data_dict)
 
-    writeNetcdf_withTime('ProductFields_', Xlen, Ylen,
+    writeNetcdf_withTime(writeFilePath + 'ProductFields_', Xlen, Ylen,
                          Zlen, dateTime, timeUnits, timeCalendar, writeDF)
-
-
-writeWithProdFields('flt_HIGH_PASS.pop.h.0009-01-05.nc')
