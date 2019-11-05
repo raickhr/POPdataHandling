@@ -21,6 +21,7 @@ landMaskT3d = np.array(landMaskT3d)
 
 def averagePOP_output(readPath, writeFilePath):
     fileList = glob(readPath+'*')
+    fileList.sort()
     total_Files = len(fileList)
 
     avg_UVEL = np.zeros((1, Zlen, Ylen, Xlen), dtype=float)
@@ -34,6 +35,29 @@ def averagePOP_output(readPath, writeFilePath):
     avg_TAUX = np.zeros((1, Ylen, Xlen), dtype=float)
     avg_TAUY = np.zeros((1, Ylen, Xlen), dtype=float)
     avg_SALT = np.zeros((1, Zlen, Ylen, Xlen), dtype=float)
+    
+    avg_UVEL = np.ma.array(avg_UVEL, mask=landMaskT3d,
+                           fill_value=float('nan')).filled()
+    avg_VVEL = np.ma.array(avg_VVEL, mask=landMaskT3d,
+                           fill_value=float('nan')).filled()
+    avg_WVEL = np.ma.array(avg_WVEL, mask=landMaskT3d,
+                           fill_value=float('nan')).filled()
+    avg_RHO = np.ma.array(avg_RHO, mask=landMaskT3d,
+                          fill_value=float('nan')).filled()
+    avg_PD = np.ma.array(avg_PD, mask=landMaskT3d,
+                         fill_value=float('nan')).filled()
+    avg_SHF = np.ma.array(avg_SHF, mask=landMaskT,
+                          fill_value=float('nan')).filled()
+    avg_EVAP_F = np.ma.array(avg_EVAP_F, mask=landMaskT,
+                             fill_value=float('nan')).filled()
+    avg_PREC_F = np.ma.array(avg_PREC_F, mask=landMaskT,
+                             fill_value=float('nan')).filled()
+    avg_TAUX = np.ma.array(avg_TAUX, mask=landMaskT,
+                           fill_value=float('nan')).filled()
+    avg_TAUY = np.ma.array(avg_TAUY, mask=landMaskT,
+                           fill_value=float('nan')).filled()
+    avg_SALT = np.ma.array(avg_SALT, mask=landMaskT3d,
+                           fill_value=float('nan')).filled()
 
     for readFilename in fileList:
         fieldsDF, timeDict = readField(
@@ -61,56 +85,78 @@ def averagePOP_output(readPath, writeFilePath):
         heading = var.keys()[0]
         UVEL = var[heading]
         avg_UVEL +=  UVEL
+        del UVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'VVEL']['val']
         heading = var.keys()[0]
         VVEL = var[heading]
         avg_VVEL += VVEL
+        del VVEL
+        gc.collect()
         
         var = fieldsDF.loc[fieldsDF['name'] == 'WVEL']['val']
         heading = var.keys()[0]
         WVEL = var[heading]
         avg_WVEL += WVEL
+        del WVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'RHO']['val']
         heading = var.keys()[0]
         RHO = var[heading]
         avg_RHO += RHO
+        del RHO
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'PD']['val']
         heading = var.keys()[0]
         PD = var[heading]
         avg_PD += PD
+        del PD
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'SALT']['val']
         heading = var.keys()[0]
         SALT = var[heading]
         avg_SALT += SALT
+        del SALT
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'SHF']['val']
         heading = var.keys()[0]
         SHF = var[heading]
         avg_SHF += SHF
+        del SHF
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'PREC_F']['val']
         heading = var.keys()[0]
         PREC_F = var[heading]
         avg_PREC_F += PREC_F
+        del PREC_F
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'EVAP_F']['val']
         heading = var.keys()[0]
         EVAP_F = var[heading]
         avg_EVAP_F += EVAP_F
+        del EVAP_F
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'TAUX']['val']
         heading = var.keys()[0]
         TAUX = var[heading]
         avg_TAUX += TAUX
+        del TAUX
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'TAUY']['val']
         heading = var.keys()[0]
         TAUY = var[heading]
         avg_TAUY += TAUY
+        del TAUY
+        gc.collect()
 
     avg_UVEL /= total_Files
     avg_VVEL /= total_Files
@@ -123,6 +169,31 @@ def averagePOP_output(readPath, writeFilePath):
     avg_TAUX /= total_Files
     avg_TAUY /= total_Files
     avg_SALT /= total_Files
+
+    avg_UVEL = np.ma.array(avg_UVEL, mask=landMaskT3d,
+                           fill_value=fill_value).filled()
+    avg_VVEL = np.ma.array(avg_VVEL, mask=landMaskT3d,
+                           fill_value=fill_value).filled()
+    avg_WVEL = np.ma.array(avg_WVEL, mask=landMaskT3d,
+                           fill_value=fill_value).filled()
+    avg_RHO = np.ma.array(avg_RHO, mask=landMaskT3d,
+                          fill_value=fill_value).filled()
+    avg_PD = np.ma.array(avg_PD, mask=landMaskT3d,
+                         fill_value=fill_value).filled()
+    avg_SHF = np.ma.array(avg_SHF, mask=landMaskT,
+                          fill_value=fill_value).filled()
+    avg_EVAP_F = np.ma.array(avg_EVAP_F, mask=landMaskT,
+                             fill_value=fill_value).filled()
+    avg_PREC_F = np.ma.array(avg_PREC_F, mask=landMaskT,
+                             fill_value=fill_value).filled()
+    avg_TAUX = np.ma.array(avg_TAUX, mask=landMaskT,
+                           fill_value=fill_value).filled()
+    avg_TAUY = np.ma.array(avg_TAUY, mask=landMaskT,
+                           fill_value=fill_value).filled()
+    avg_SALT = np.ma.array(avg_SALT, mask=landMaskT3d,
+                           fill_value=fill_value).filled()
+
+    gc.collect()
 
     all_data_dict = []
 
@@ -224,15 +295,19 @@ def averagePOP_output(readPath, writeFilePath):
     }
 
     all_data_dict.append(var_dict)
-    
+
+    del avg_UVEL, avg_VVEL, avg_WVEL, avg_RHO, avg_PD
+    del avg_SHF, avg_EVAP_F, avg_PREC_F, avg_TAUX, avg_TAUY, avg_SALT
 
     writeDF = pd.DataFrame(data=all_data_dict)
+    del all_data_dict
 
     writeNetcdf(writeFilePath + 'POP_time_averaged.nc', Xlen, Ylen, Zlen, writeDF)
 
 
 def averagePRD_output(readPath, writeFilePath):
     fileList = glob(readPath+'*')
+    fileList.sort()
     total_Files = len(fileList)
 
     avg_RHO_UVEL = np.zeros((1, Zlen, Ylen, Xlen), dtype=float)
@@ -240,6 +315,7 @@ def averagePRD_output(readPath, writeFilePath):
     avg_RHO_WVEL = np.zeros((1, Zlen, Ylen, Xlen), dtype=float)
 
     avg_RHO_star = np.zeros((1, Zlen, Ylen, Xlen), dtype=float)
+    avg_RHO_star_RHO_star = np.zeros((1, Zlen, Ylen, Xlen), dtype=float)
 
     avg_UVEL_UVEL = np.zeros((1, Zlen, Ylen, Xlen), dtype=float)
     avg_UVEL_VVEL = np.zeros((1, Zlen, Ylen, Xlen), dtype=float)
@@ -254,6 +330,40 @@ def averagePRD_output(readPath, writeFilePath):
     avg_TAUX_UVEL = np.zeros((1, Ylen, Xlen), dtype=float)
     avg_TAUY_VVEL = np.zeros((1, Ylen, Xlen), dtype=float)
 
+    ###### MASKING SO THAT IT DOESN'T HAVE OVERFLOW ERROR ######
+
+    avg_RHO_UVEL = np.ma.array(
+        avg_RHO_UVEL, mask=landMaskT3d, fill_value=float('nan')).filled()
+    avg_RHO_VVEL = np.ma.array(
+        avg_RHO_VVEL, mask=landMaskT3d, fill_value=float('nan')).filled()
+    avg_RHO_WVEL = np.ma.array(
+        avg_RHO_WVEL, mask=landMaskT3d, fill_value=float('nan')).filled()
+
+    avg_RHO_star = np.ma.array(
+        avg_RHO_star, mask=landMaskT3d, fill_value=float('nan')).filled()
+    avg_RHO_star_RHO_star = np.ma.array(
+        avg_RHO_star_RHO_star, mask=landMaskT3d, fill_value=float('nan')).filled()
+
+    avg_UVEL_UVEL = np.ma.array(
+        avg_UVEL_UVEL, mask=landMaskT3d, fill_value=float('nan')).filled()
+    avg_UVEL_VVEL = np.ma.array(
+        avg_UVEL_VVEL, mask=landMaskT3d, fill_value=float('nan')).filled()
+    avg_UVEL_WVEL = np.ma.array(
+        avg_UVEL_WVEL, mask=landMaskT3d, fill_value=float('nan')).filled()
+    avg_VVEL_VVEL = np.ma.array(
+        avg_VVEL_VVEL, mask=landMaskT3d, fill_value=float('nan')).filled()
+    avg_VVEL_WVEL = np.ma.array(
+        avg_VVEL_WVEL, mask=landMaskT3d, fill_value=float('nan')).filled()
+
+    avg_Js_RHO = np.ma.array(avg_Js_RHO, mask=landMaskT,
+                             fill_value=float('nan')).filled()
+    avg_Gs_RHO = np.ma.array(avg_Gs_RHO, mask=landMaskT,
+                             fill_value=float('nan')).filled()
+
+    avg_TAUX_UVEL = np.ma.array(
+        avg_TAUX_UVEL, mask=landMaskT, fill_value=float('nan')).filled()
+    avg_TAUY_VVEL = np.ma.array(
+        avg_TAUY_VVEL, mask=landMaskT, fill_value=float('nan')).filled()
 
     for readFilename in fileList:
         fieldsDF, timeDict = readField(
@@ -261,6 +371,7 @@ def averagePRD_output(readPath, writeFilePath):
                            'RHO_VVEL',
                            'RHO_WVEL',
                            'RHO_star',
+                           'RHO_star_RHO_star',
                            'UVEL_UVEL',
                            'UVEL_VVEL',
                            'UVEL_WVEL',
@@ -283,71 +394,105 @@ def averagePRD_output(readPath, writeFilePath):
         heading = var.keys()[0]
         RHO_UVEL = var[heading]
         avg_RHO_UVEL += RHO_UVEL
+        del RHO_UVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'RHO_VVEL']['val']
         heading = var.keys()[0]
         RHO_VVEL = var[heading]
         avg_RHO_VVEL += RHO_VVEL
+        del RHO_VVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'RHO_WVEL']['val']
         heading = var.keys()[0]
         RHO_WVEL = var[heading]
         avg_RHO_WVEL += RHO_WVEL
+        del RHO_WVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'RHO_star']['val']
         heading = var.keys()[0]
         RHO_star = var[heading]
         avg_RHO_star += RHO_star
+        del RHO_star
+        gc.collect()
+
+        var = fieldsDF.loc[fieldsDF['name'] == 'RHO_star_RHO_star']['val']
+        heading = var.keys()[0]
+        RHO_star_RHO_star = var[heading]
+        avg_RHO_star_RHO_star += RHO_star_RHO_star
+        del RHO_star_RHO_star
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'UVEL_UVEL']['val']
         heading = var.keys()[0]
         UVEL_UVEL = var[heading]
         avg_UVEL_UVEL += UVEL_UVEL
+        del UVEL_UVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'UVEL_VVEL']['val']
         heading = var.keys()[0]
         UVEL_VVEL = var[heading]
         avg_UVEL_VVEL += UVEL_VVEL
+        del UVEL_VVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'UVEL_WVEL']['val']
         heading = var.keys()[0]
         UVEL_WVEL = var[heading]
         avg_UVEL_WVEL += UVEL_WVEL
+        del UVEL_WVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'VVEL_VVEL']['val']
         heading = var.keys()[0]
         VVEL_VVEL = var[heading]
         avg_VVEL_VVEL += VVEL_VVEL
+        del VVEL_VVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'VVEL_WVEL']['val']
         heading = var.keys()[0]
         VVEL_WVEL = var[heading]
         avg_VVEL_WVEL += VVEL_WVEL
+        del VVEL_WVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'Js_RHO']['val']
         heading = var.keys()[0]
         Js_RHO = var[heading]
         avg_Js_RHO += Js_RHO
+        del Js_RHO
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'Gs_RHO']['val']
         heading = var.keys()[0]
         Gs_RHO = var[heading]
         avg_Gs_RHO += Gs_RHO
+        del Gs_RHO
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'TAUX_UVEL']['val']
         heading = var.keys()[0]
         TAUX_UVEL = var[heading]
         avg_TAUX_UVEL += TAUX_UVEL
+        del TAUX_UVEL
+        gc.collect()
 
         var = fieldsDF.loc[fieldsDF['name'] == 'TAUY_VVEL']['val']
         heading = var.keys()[0]
         TAUY_VVEL = var[heading]
         avg_TAUY_VVEL += TAUY_VVEL
+        del TAUY_VVEL
+        gc.collect()
 
     avg_RHO_UVEL /= total_Files
     avg_RHO_VVEL /= total_Files
     avg_RHO_WVEL /= total_Files
     avg_RHO_star /= total_Files
+    avg_RHO_star_RHO_star /= total_Files
     avg_UVEL_UVEL /= total_Files
     avg_UVEL_VVEL /= total_Files
     avg_UVEL_WVEL /= total_Files
@@ -357,6 +502,40 @@ def averagePRD_output(readPath, writeFilePath):
     avg_Gs_RHO /= total_Files
     avg_TAUX_UVEL /= total_Files
     avg_TAUY_VVEL /= total_Files
+
+    avg_RHO_UVEL = np.ma.array(
+        avg_RHO_UVEL, mask=landMaskT3d, fill_value=fill_value).filled()
+    avg_RHO_VVEL = np.ma.array(
+        avg_RHO_VVEL, mask=landMaskT3d, fill_value=fill_value).filled()
+    avg_RHO_WVEL = np.ma.array(
+        avg_RHO_WVEL, mask=landMaskT3d, fill_value=fill_value).filled()
+
+    avg_RHO_star = np.ma.array(
+        avg_RHO_star, mask=landMaskT3d, fill_value=fill_value).filled()
+    avg_RHO_star_RHO_star = np.ma.array(
+        avg_RHO_star_RHO_star, mask=landMaskT3d, fill_value=fill_value).filled()
+
+    avg_UVEL_UVEL = np.ma.array(
+        avg_UVEL_UVEL, mask=landMaskT3d, fill_value=fill_value).filled()
+    avg_UVEL_VVEL = np.ma.array(
+        avg_UVEL_VVEL, mask=landMaskT3d, fill_value=fill_value).filled()
+    avg_UVEL_WVEL = np.ma.array(
+        avg_UVEL_WVEL, mask=landMaskT3d, fill_value=fill_value).filled()
+    avg_VVEL_VVEL = np.ma.array(
+        avg_VVEL_VVEL, mask=landMaskT3d, fill_value=fill_value).filled()
+    avg_VVEL_WVEL = np.ma.array(
+        avg_VVEL_WVEL, mask=landMaskT3d, fill_value=fill_value).filled()
+
+    avg_Js_RHO = np.ma.array(avg_Js_RHO, mask=landMaskT,
+                             fill_value=fill_value).filled()
+    avg_Gs_RHO = np.ma.array(avg_Gs_RHO, mask=landMaskT,
+                             fill_value=fill_value).filled()
+
+    avg_TAUX_UVEL = np.ma.array(
+        avg_TAUX_UVEL, mask=landMaskT, fill_value= fill_value).filled()
+    avg_TAUY_VVEL = np.ma.array(
+        avg_TAUY_VVEL, mask=landMaskT, fill_value= fill_value).filled()
+
 
     all_data_dict = []
 
@@ -402,6 +581,18 @@ def averagePRD_output(readPath, writeFilePath):
     del avg_RHO_star
     gc.collect()
     all_data_dict.append(var_dict)
+
+    var_dict = {
+        'name': 'RHO_star_RHO_star',
+        'long_name': 'differece of RHO and areaAveraged RHO at the level',
+        'units': 'gram^2/cm^6',
+        'val': avg_RHO_star_RHO_star[0, :, :, :],
+    }
+
+    del avg_RHO_star_RHO_star
+    gc.collect()
+    all_data_dict.append(var_dict)
+
 
     var_dict = {
         'name': 'UVEL_UVEL',
@@ -499,9 +690,13 @@ def averagePRD_output(readPath, writeFilePath):
     all_data_dict.append(var_dict)
 
     writeDF = pd.DataFrame(data=all_data_dict)
+    del all_data_dict
 
     writeNetcdf(writeFilePath + 'PRD_time_averaged.nc',
                 Xlen, Ylen, Zlen, writeDF)
+
+
+#averagePRD_output(PRD_outpath, AVG_outpath)
 
 
 

@@ -19,6 +19,9 @@ rho = np.array(dataset.variables['rho_sw'])
 rho_fw = np.array(dataset.variables['rho_fw'])
 cp_sw = np.array(dataset.variables['cp_sw'])
 
-alpha = 2.55e-4 # this is used from POP2 equation of State 
+alpha = -2.55e-4 # this is used from POP2 equation of State 
 beta = 7.64e-1 # this is used from POP2 equation of State
+
+
+fill_value = 9.96921e+36
 

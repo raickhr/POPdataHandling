@@ -57,10 +57,10 @@ def calc_stratification(PD_in):
         area_avg_PD[k,:,:] = np.nansum(
             PD[k, :, :] * AREA3D[k, :, :])/np.nansum(AREA3D[k, :, :])
 
-    k_plus = np.roll(area_avg_PD, -1,axis=0)
-    k_plus[Zlen-1,:,:] = 0.0
+    k_minus = np.roll(area_avg_PD, -1,axis=0)
+    k_minus[Zlen-1,:,:] = 0.0
 
-    gradZ = (k_plus - area_avg_PD)/DZ
+    gradZ = (area_avg_PD-k_minus)/DZ
 
     n0 = np.empty((Zlen, Ylen, Xlen), dtype=float)
     for k in range(Zlen):
@@ -279,7 +279,7 @@ def get_meanPE(avg_RHO_star,n0):
     for k in range(Zlen):
         g3D[k, :, :] = g
 
-    ENG = g3D /(2*n0) * avg_RHO_star**2
+    ENG = - g3D /(2*n0) * avg_RHO_star**2
 
     Volume = getU_VOLUME()
     landMaskT3d = getLandMaskT3d()
@@ -293,7 +293,7 @@ def get_meanPE(avg_RHO_star,n0):
 
 
 def get_meanKE(AVG_UVEL, AVG_VVEL):
-    ENG = 1/2 * rho *(AVG_outpath**2 + AVG_VVEL**2)
+    ENG = 1/2 * rho *(AVG_UVEL**2 + AVG_VVEL**2)
     Volume = getU_VOLUME()
     landMaskT3d = getLandMaskT3d()
 
@@ -320,7 +320,7 @@ def get_eddyPE(eddy_RHO_star,n0):
     for k in range(Zlen):
         g3D[k, :, :] = g
 
-    ENG = g3D / (2*n0) * eddy_RHO_star
+    ENG = - g3D / (2*n0) * eddy_RHO_star
 
     Volume = getU_VOLUME()
     landMaskT3d = getLandMaskT3d()

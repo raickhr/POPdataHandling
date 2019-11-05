@@ -4,6 +4,7 @@ import datetime
 from netCDF4 import date2num, num2date
 import pandas as pd
 import sys
+import matplotlib.pyplot as plt
 
 def readGridInfo(filename):
     dataset = Dataset(filename)
